@@ -1,30 +1,33 @@
 ﻿using HNG_Organisation.Data;
 using HNG_Organisation.Entities;
+using HNG_Organisation.Extensions;
 using HNG_Organisation.Models;
+using HNG_Organisation.Results;
 using Microsoft.AspNetCore.Identity;
 
 namespace HNG_Organisation.Services;
 
-public class UserServices
+public partial class UserServices
 {
     private readonly UserManager<User> _userManager;
-    private readonly SignInManager<User> _signInManager;
-    private readonly IConfiguration config;
     private readonly ApplicationDbContext _context;
 
     public UserServices(UserManager<User> userManager,
-        SignInManager<User> signInManager,
-        IConfiguration config,
         ApplicationDbContext context)
     {
         _userManager = userManager;
-        _signInManager = signInManager;
-        this.config = config;
         _context = context;
     }
 
-    public async Task<IdentityResult> RegisterUserAsync(RegisterModel model)
+    public async Task<RegisterResult?> RegisterUserAsync(RegisterModel model)
     {
+        var registerResult = model.IsValidRegisterModel();
+
+        if (registerResult.Errors.Count > 0)
+        {
+            return registerResult;
+        }
+
         using var transaction = await _context.Database
             .BeginTransactionAsync();
 
@@ -39,15 +42,14 @@ public class UserServices
                 PhoneNumber = model.Phone
             };
 
-            // Identity hashes passwords by default
-            var result = await _userManager.CreateAsync(user, model.Password);
+            // Password is hashed by default
+            await _userManager.CreateAsync(user, model.Password);
 
-            if (result.Succeeded)
-            {
-                await transaction.CommitAsync();
-            }
+            // Create an organisation for the user
 
-            return result;
+            await transaction.CommitAsync();
+
+            return null;
         }
         catch (Exception)
         {
