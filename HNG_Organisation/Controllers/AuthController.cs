@@ -19,9 +19,6 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Register([FromBody] RegisterModel model)
     {
         var registerResult = model.IsValidRegisterModel();
@@ -42,5 +39,23 @@ public class AuthController : ControllerBase
         }
 
         return Created("", response);
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginModel model)
+    {
+        var successResponse = await _userService.LoginUserAsync(model);
+
+        if (successResponse is null)
+        {
+            return Unauthorized(new UnsuccessfulResponse()
+            {
+                Status = "Bad Request",
+                Message = "Authentication failed",
+                StatusCode = 401
+            });
+        }
+
+        return Ok(successResponse);
     }
 }
