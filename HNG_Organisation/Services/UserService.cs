@@ -52,7 +52,7 @@ public partial class UserService
                 // Create an organisation for the user
 
                 // Generate token and sign user in
-                string token = string.Empty;
+                string token = GenerateToken(user, _config);
 
                 await transaction.CommitAsync();
 
@@ -65,11 +65,11 @@ public partial class UserService
                         AccessToken = token,
                         User = new User
                         {
-                            Id = user.Id,
+                            UserId = user.Id,
                             FirstName = model.FirstName,
                             LastName = model.LastName,
                             Email = model.Email,
-                            PhoneNumber = model.Phone
+                            Phone = model.Phone
                         }
                     }
                 };
@@ -95,6 +95,31 @@ public partial class UserService
             model.Email, model.Password, false, false);
         if (result is null) return null;
 
+        var token = GenerateToken(user, _config);
+
+        var successResponse = new SuccessResponse()
+        {
+            Status = "success",
+            Message = "Login successful",
+            Data = new SuccessData
+            {
+                AccessToken = token,
+                User = new User
+                {
+                    UserId = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    Phone = user.Phone
+                }
+            }
+        };
+
+        return successResponse;
+    }
+
+    private static string GenerateToken(User user, IConfiguration config)
+    {
         var authClaims = new List<Claim>
         {
             new (ClaimTypes.Name, user.UserName!), // UserName is not null here
@@ -103,15 +128,15 @@ public partial class UserService
 
         var authSigningKey = new SymmetricSecurityKey(
             // Key is not null
-            Encoding.UTF8.GetBytes(_config.GetValue<string>("Jwt:Key")!));
+            Encoding.UTF8.GetBytes(config.GetValue<string>("Jwt:Key")!));
 
         var signingCredentials = new SigningCredentials(
             authSigningKey, SecurityAlgorithms.HmacSha256);
 
         // Generate token
         var token = new JwtSecurityToken(
-        issuer: _config.GetValue<string>("Jwt:Issuer"),
-        audience: _config.GetValue<string>("Jwt:Audience"),
+        issuer: config.GetValue<string>("Jwt:Issuer"),
+        audience: config.GetValue<string>("Jwt:Audience"),
         claims: authClaims,
         notBefore: DateTime.UtcNow,
         expires: DateTime.UtcNow.AddMinutes(3),
@@ -119,24 +144,6 @@ public partial class UserService
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-        var successResponse = new SuccessResponse()
-        {
-            Status = "success",
-            Message = "Login successful",
-            Data = new SuccessData
-            {
-                AccessToken = tokenString,
-                User = new User
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                    PhoneNumber = user.PhoneNumber
-                }
-            }
-        };
-
-        return successResponse;
+        return tokenString;
     }
 }

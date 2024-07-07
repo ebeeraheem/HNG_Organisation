@@ -4,8 +4,10 @@ namespace HNG_Organisation.Entities;
 
 public class User : IdentityUser
 {
+    public string UserId { get; set; } = Guid.NewGuid().ToString();
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
 
-    // The userId, email, password and phone properties are inherited from IdentityUser
+    // The email and password are inherited from IdentityUser
 }
