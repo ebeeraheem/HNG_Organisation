@@ -33,7 +33,12 @@ public class AuthController : ControllerBase
         var response = await _userService.RegisterUserAsync(model);
         if (response is null)
         {
-            return BadRequest(new UnsuccessfulResponse());
+            return BadRequest(new UnsuccessfulResponse()
+            {
+                Status = "Bad Request",
+                Message = "Registration unsuccessful",
+                StatusCode = 400
+            });
         }
 
         return Created("", response);

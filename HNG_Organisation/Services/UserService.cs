@@ -75,4 +75,9 @@ public partial class UserService
             throw;
         }
     }
+
+    public async Task LoginUserAsync(LoginModel model)
+    {
+
+    }
 }
