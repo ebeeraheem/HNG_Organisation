@@ -28,6 +28,9 @@ public partial class UserService
         _context = context;
     }
 
+    // Get user
+
+
     public async Task<SuccessResponse?> RegisterUserAsync(RegisterModel model)
     {
         using var transaction = await _context.Database
