@@ -10,4 +10,5 @@ public class User : IdentityUser
     public string Phone { get; set; } = string.Empty;
 
     // The email and password are inherited from IdentityUser
+    public List<Organisation> Organisations { get; set; } = [];
 }
