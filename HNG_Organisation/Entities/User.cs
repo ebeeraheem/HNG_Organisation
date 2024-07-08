@@ -7,8 +7,7 @@ public class User : IdentityUser
     public string UserId { get; set; } = Guid.NewGuid().ToString();
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
 
-    // The email and password are inherited from IdentityUser
+    // The phone, email and password are inherited from IdentityUser
     public List<Organisation> Organisations { get; set; } = [];
 }

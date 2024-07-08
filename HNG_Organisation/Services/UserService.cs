@@ -94,7 +94,7 @@ public partial class UserService
                     Data = new SuccessData
                     {
                         AccessToken = token,
-                        User = new User
+                        User = new UserDto
                         {
                             UserId = user.Id,
                             FirstName = model.FirstName,
@@ -135,13 +135,13 @@ public partial class UserService
             Data = new SuccessData
             {
                 AccessToken = token,
-                User = new User
+                User = new UserDto
                 {
                     UserId = user.Id,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Email = user.Email,
-                    Phone = user.Phone
+                    Email = user.Email!, // Email is not null here
+                    Phone = user.PhoneNumber! // PhoneNumber is not null here
                 }
             }
         };
