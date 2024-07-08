@@ -3,10 +3,13 @@ using HNG_Organisation.Extensions;
 using HNG_Organisation.Models;
 using HNG_Organisation.Results;
 using HNG_Organisation.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HNG_Organisation.Controllers;
+
+[AllowAnonymous]
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
