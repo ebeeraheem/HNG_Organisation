@@ -5,6 +5,10 @@ namespace HNG_Organisation.Services;
 public class OrganisationService
 {
     // Create org
+    public async Task CreateOrganisationAsync()
+    {
+
+    }
 
     // Get organisation
 
