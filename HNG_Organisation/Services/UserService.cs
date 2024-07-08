@@ -77,6 +77,11 @@ public partial class UserService
                 // Add organisation to list of user's organisations
                 user.Organisations.Add(organisation);
 
+                // Save changes
+                _context.Users.Update(user);
+                _context.Organisations.Update(organisation);
+                await _context.SaveChangesAsync();
+
                 // Generate token and sign user in
                 string token = GenerateToken(user, _config);
 
