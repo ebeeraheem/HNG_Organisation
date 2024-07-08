@@ -2,7 +2,7 @@
 
 public class UnsuccessfulResponse
 {
-    public string Status { get; set; } = "Bad request";
-    public string Message { get; set; } = "Registration unsuccessful";
-    public int StatusCode { get; set; } = 400;
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public int StatusCode { get; set; }
 }
