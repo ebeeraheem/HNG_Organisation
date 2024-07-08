@@ -16,16 +16,19 @@ public partial class UserService
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _config;
     private readonly ApplicationDbContext _context;
+    private readonly OrganisationService _organisationService;
 
     public UserService(UserManager<User> userManager,
         SignInManager<User> signInManager,
         IConfiguration config,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        OrganisationService organisationService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _config = config;
         _context = context;
+        _organisationService = organisationService;
     }
 
     // Get user
@@ -52,7 +55,27 @@ public partial class UserService
 
             if (result.Succeeded)
             {
+                // Determine the user's name
+                var name = user.FirstName.EndsWith('s') ?
+                    $"{user.FirstName}' Organisation" :
+                    $"{user.FirstName}'s Organisation";
+
+                // Create an organisation model for the user
+                var organisationModel = new OrganisationModel()
+                {
+                    Name = name,
+                    Description = $"Created on {DateTime.Now}"
+                };
+
                 // Create an organisation for the user
+                var organisation = await _organisationService
+                    .CreateOrganisationAsync(organisationModel);
+
+                // Add the user to the organisation
+                organisation.Users.Add(user);
+
+                // Add organisation to list of user's organisations
+                user.Organisations.Add(organisation);
 
                 // Generate token and sign user in
                 string token = GenerateToken(user, _config);
