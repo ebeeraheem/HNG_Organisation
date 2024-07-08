@@ -64,7 +64,7 @@ public partial class UserService
                 var organisationModel = new OrganisationModel()
                 {
                     Name = name,
-                    Description = $"Created on {DateTime.Now}"
+                    Description = $"Created on {DateTime.Now:dd MMMM, yyyy}"
                 };
 
                 // Create an organisation for the user
