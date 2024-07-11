@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -18,7 +19,23 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrganisationService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+//// SQL Server local configuration
+//builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Supabase configuration
+// Debug: Log the connection string to verify it is not null
+var connectionString = builder.Configuration.GetConnectionString("SupabaseConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("SupabaseConnection string is null or empty.");
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+//builder.Services.AddDbContext<ApplicationDbContext>(
+//    options => options.UseNpgsql(
+//        builder.Configuration.GetConnectionString("SupabaseConnection")));
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
