@@ -10,6 +10,6 @@ public class ApplicationDbContext : IdentityDbContext
     {        
     }
 
-    public DbSet<User> Users { get; set; }
+    public DbSet<User> ApplicationUsers { get; set; }
     public DbSet<Organisation> Organisations { get; set; }
 }

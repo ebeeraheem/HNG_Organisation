@@ -19,23 +19,23 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrganisationService>();
 
-//// SQL Server local configuration
+// SQL Server local configuration
 //builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Supabase configuration
-// Debug: Log the connection string to verify it is not null
-var connectionString = builder.Configuration.GetConnectionString("SupabaseConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("SupabaseConnection string is null or empty.");
-}
+//// Debug: Log the connection string to verify it is not null
+//var connectionString = builder.Configuration.GetConnectionString("SupabaseConnection");
+//if (string.IsNullOrEmpty(connectionString))
+//{
+//    throw new Exception("SupabaseConnection string is null or empty.");
+//}
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseNpgsql(connectionString));
 
-//builder.Services.AddDbContext<ApplicationDbContext>(
-//    options => options.UseNpgsql(
-//        builder.Configuration.GetConnectionString("SupabaseConnection")));
+// Local postgreSQL configuration
+builder.Services.AddDbContext<ApplicationDbContext>(
+    options => options.UseNpgsql(
+        builder.Configuration.GetConnectionString("LocalPostgres")));
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
