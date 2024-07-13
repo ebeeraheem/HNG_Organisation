@@ -16,6 +16,30 @@ public class OrganisationsController : ControllerBase
         _organisationService = organisationService;
     }
 
+    [HttpGet("{id}")]
+    public async Task<ActionResult<OrganisationSuccessResponse>> GetOrganisation(int id)
+    {
+        var organisation = await _organisationService.GetOrganisation(id);
+        if (organisation is null)
+        {
+            return NotFound();
+        }
+
+        var response = new OrganisationSuccessResponse()
+        {
+            Status = "success",
+            Message = "organisation retrieved successfully",
+            Data = new OrganisationSuccessData()
+            {
+                orgId = organisation.Id,
+                name = organisation.Name,
+                description = organisation.Description
+            }
+        };
+
+        return Ok(response);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateOrganisation([FromBody] OrganisationModel model)
     {

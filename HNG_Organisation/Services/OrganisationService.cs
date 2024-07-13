@@ -1,6 +1,7 @@
 ﻿using HNG_Organisation.Data;
 using HNG_Organisation.Entities;
 using HNG_Organisation.Models;
+using HNG_Organisation.Results;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.InteropServices;
 
@@ -31,6 +32,11 @@ public class OrganisationService
     }
 
     // Get organisation
+    public async Task<Organisation?> GetOrganisation(int id)
+    {
+        var organisation = await _context.Organisations.FindAsync(id);
+        return organisation;
+    }
 
     // Get a user's organisations
 
