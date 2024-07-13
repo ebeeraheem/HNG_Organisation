@@ -17,7 +17,7 @@ public class OrganisationsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<OrganisationSuccessResponse>> GetOrganisation(int id)
+    public async Task<ActionResult<OrganisationSuccessResponse>> GetOrganisation(string id)
     {
         var organisation = await _organisationService.GetOrganisation(id);
         if (organisation is null)

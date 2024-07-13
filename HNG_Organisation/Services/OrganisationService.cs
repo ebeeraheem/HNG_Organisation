@@ -32,7 +32,7 @@ public class OrganisationService
     }
 
     // Get organisation
-    public async Task<Organisation?> GetOrganisation(int id)
+    public async Task<Organisation?> GetOrganisation(string id)
     {
         var organisation = await _context.Organisations.FindAsync(id);
         return organisation;
