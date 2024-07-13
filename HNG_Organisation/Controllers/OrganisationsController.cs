@@ -85,4 +85,12 @@ public class OrganisationsController : ControllerBase
             return BadRequest(failureResponse);
         }
     }
+
+    [HttpPost("{orgId}/users")]
+    public async Task<AddUserResponse> AddUserToOrganisation(string orgId, [FromBody] AddUserToOrganisationModel addUserModel)
+    {
+        var response = await _organisationService.AddUserToOrganisation(orgId, addUserModel);
+
+        return response;
+    }
 }

@@ -40,5 +40,36 @@ public class OrganisationService
 
     // Get a user's organisations
 
-    // Add user to org
+    // Add user to organisation
+    public async Task<AddUserResponse> AddUserToOrganisation(string orgId, AddUserToOrganisationModel addUserModel)
+    {
+        var organisation = await _context.Organisations.FindAsync(orgId);
+        if (organisation is null)
+        {
+            return new AddUserResponse()
+            {
+                status = "failed",
+                message = "Invalid organisation ID"
+            };
+        }
+
+        var user = await _context.ApplicationUsers.FindAsync(addUserModel.userId);
+        if (user is null)
+        {
+            return new AddUserResponse()
+            {
+                status = "failed",
+                message = "Invalid user ID"
+            };
+        }
+
+        organisation.Users.Add(user);
+        user.Organisations.Add(organisation);
+
+        return new AddUserResponse()
+        {
+            status = "success",
+            message = "User added to organisation successfully"
+        };
+    }
 }
