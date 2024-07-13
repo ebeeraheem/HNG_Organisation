@@ -4,5 +4,7 @@ namespace HNG_Organisation.Models;
 
 public class OrganisationSuccessData
 {
-    public Organisation Organisation { get; set; } = new(); 
+    public string orgId { get; set; } = string.Empty;
+    public string name { get; set; } = string.Empty;
+    public string description { get; set; } = string.Empty;
 }

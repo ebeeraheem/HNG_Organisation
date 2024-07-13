@@ -14,7 +14,8 @@ public class OrganisationService
     {
         _context = context;
     }
-    // Create org
+
+    // Create organisation
     public async Task<Organisation> CreateOrganisationAsync(OrganisationModel model)
     {
         var organisation = new Organisation()

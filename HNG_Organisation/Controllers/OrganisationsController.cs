@@ -42,7 +42,9 @@ public class OrganisationsController : ControllerBase
                 Message = "Organisation created successfully",
                 Data = new OrganisationSuccessData()
                 {
-                    Organisation = organisation
+                    orgId = organisation.Id,
+                    name = organisation.Name,
+                    description = organisation.Description
                 }
             };
             return Created("", response);

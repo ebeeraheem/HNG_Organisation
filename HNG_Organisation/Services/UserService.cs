@@ -82,7 +82,7 @@ public partial class UserService
                 _context.Organisations.Update(organisation);
                 await _context.SaveChangesAsync();
 
-                // Generate token and sign user in
+                // Generate token
                 string token = GenerateToken(user, _config);
 
                 await transaction.CommitAsync();
