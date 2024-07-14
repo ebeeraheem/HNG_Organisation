@@ -153,7 +153,8 @@ public partial class UserService
     {
         var authClaims = new List<Claim>
         {
-            new (ClaimTypes.Name, user.UserName!), // UserName is not null here
+            new (ClaimTypes.NameIdentifier, user.Id),
+            new (ClaimTypes.Name, user.Email),
             new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

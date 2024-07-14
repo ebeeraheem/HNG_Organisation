@@ -66,6 +66,8 @@ public class OrganisationService
         organisation.Users.Add(user);
         user.Organisations.Add(organisation);
 
+        await _context.SaveChangesAsync();
+
         return new AddUserResponse()
         {
             status = "success",
