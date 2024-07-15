@@ -30,10 +30,7 @@ public partial class UserService
         _context = context;
         _organisationService = organisationService;
     }
-
-    // Get user
-
-
+        
     public async Task<SuccessResponse?> RegisterUserAsync(RegisterModel model)
     {
         using var transaction = await _context.Database
@@ -149,18 +146,18 @@ public partial class UserService
         return successResponse;
     }
 
-    private static string GenerateToken(User user, IConfiguration config)
+    public string GenerateToken(User user, IConfiguration config)
     {
         var authClaims = new List<Claim>
         {
             new (ClaimTypes.NameIdentifier, user.Id),
-            new (ClaimTypes.Name, user.Email),
+            new (ClaimTypes.Name, user.Email!), // Email is not null here
             new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var authSigningKey = new SymmetricSecurityKey(
             // Key is not null
-            Encoding.UTF8.GetBytes(config.GetValue<string>("Jwt:Key")!));
+            Encoding.UTF8.GetBytes(config.GetValue<string>("Jwt:Key")));
 
         var signingCredentials = new SigningCredentials(
             authSigningKey, SecurityAlgorithms.HmacSha256);
