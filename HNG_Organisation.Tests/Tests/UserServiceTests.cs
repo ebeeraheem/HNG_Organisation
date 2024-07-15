@@ -21,7 +21,8 @@ public class UserServiceTests
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<SignInManager<User>> _signInManagerMock;
     private readonly ApplicationDbContext _context;
-    private readonly Mock<OrganisationService> _organisationServiceMock;   
+    private readonly Mock<OrganisationService> _organisationServiceMock;
+    private readonly IConfiguration _configuration;
 
     public UserServiceTests()
     {
@@ -36,12 +37,7 @@ public class UserServiceTests
 
         _context = new ApplicationDbContext(options);
         _organisationServiceMock = new Mock<OrganisationService>(_context);
-    }
 
-    [Fact]
-    public void GenerateToken_ShouldExpireAfter30Minutes()
-    {
-        // Arrange
         var inMemorySettings = new Dictionary<string, string>()
         {
             {"Jwt:Key", "0961024c-e6a6-44d5-bd3a-30b12afbb5a4"},
@@ -49,10 +45,15 @@ public class UserServiceTests
             {"Jwt:Audience", "HNG_Organisation"}
         };
 
-        IConfiguration configuration = new ConfigurationBuilder()
+        _configuration = new ConfigurationBuilder()
         .AddInMemoryCollection(inMemorySettings)
         .Build();
+    }
 
+    [Fact]
+    public void GenerateToken_ShouldExpireAfter30Minutes()
+    {
+        // Arrange
         var user = new User()
         {
             Id = "sdfghjkl-dfghjk567-dfgh456",
@@ -65,12 +66,12 @@ public class UserServiceTests
         var userService = new UserService(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            configuration,
+            _configuration,
             _context,
             _organisationServiceMock.Object);
 
         // Act
-        var tokenString = userService.GenerateToken(user, configuration);
+        var tokenString = userService.GenerateToken(user, _configuration);
         var jwtToken = tokenHandler.ReadJwtToken(tokenString);
 
         // Assert
@@ -83,17 +84,6 @@ public class UserServiceTests
     public void GenerateToken_ShouldContainCorrectUserDetails()
     {
         // Arrange
-        var inMemorySettings = new Dictionary<string, string>()
-        {
-            {"Jwt:Key", "0961024c-e6a6-44d5-bd3a-30b12afbb5a4"},
-            {"Jwt:Issuer", "https://localhost:7204"},
-            {"Jwt:Audience", "HNG_Organisation"}
-        };
-
-        IConfiguration configuration = new ConfigurationBuilder()
-        .AddInMemoryCollection(inMemorySettings)
-        .Build();
-
         var user = new User()
         {
             Id = "sdfghjkl-dfghjk567-dfgh456",
@@ -106,12 +96,12 @@ public class UserServiceTests
         var userService = new UserService(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            configuration,
+            _configuration,
             _context,
             _organisationServiceMock.Object);
 
         // Act
-        var tokenString = userService.GenerateToken(user, configuration);
+        var tokenString = userService.GenerateToken(user, _configuration);
         var jwtToken = tokenHandler.ReadJwtToken(tokenString);
 
         // Assert
