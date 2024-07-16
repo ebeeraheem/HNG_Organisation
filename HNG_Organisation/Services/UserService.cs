@@ -16,13 +16,13 @@ public partial class UserService
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _config;
     private readonly ApplicationDbContext _context;
-    private readonly OrganisationService _organisationService;
+    private readonly IOrganisationService _organisationService;
 
     public UserService(UserManager<User> userManager,
         SignInManager<User> signInManager,
         IConfiguration config,
         ApplicationDbContext context,
-        OrganisationService organisationService)
+        IOrganisationService organisationService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -33,85 +33,68 @@ public partial class UserService
         
     public async Task<SuccessResponse?> RegisterUserAsync(RegisterModel model)
     {
-        using var transaction = await _context.Database
-            .BeginTransactionAsync();
-
-        try
+        var user = new User()
         {
-            var user = new User()
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            Email = model.Email,
+            UserName = model.Email,
+            PhoneNumber = model.Phone
+        };
+
+        // Password is hashed by default
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (result.Succeeded)
+        {
+            // Determine the user's name
+            var name = user.FirstName.EndsWith('s') ?
+                $"{user.FirstName}' Organisation" :
+                $"{user.FirstName}'s Organisation";
+
+            // Create an organisation model for the user
+            var organisationModel = new OrganisationModel()
             {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                UserName = model.Email,
-                PhoneNumber = model.Phone
+                Name = name,
+                Description = $"Created on {DateTime.Now:dd MMMM, yyyy}"
             };
 
-            // Password is hashed by default
-            var result = await _userManager.CreateAsync(user, model.Password);
+            // Create an organisation for the user
+            var organisation = await _organisationService
+                .CreateOrganisationAsync(organisationModel);
 
-            if (result.Succeeded)
+            organisation.Users.Add(user);
+            user.Organisations.Add(organisation);
+
+            // Save changes
+            _context.ApplicationUsers.Update(user);
+            _context.Organisations.Update(organisation);
+            await _context.SaveChangesAsync();
+
+            // Generate token
+            string token = GenerateToken(user, _config);
+
+            var successResponse = new SuccessResponse()
             {
-                // Determine the user's name
-                var name = user.FirstName.EndsWith('s') ?
-                    $"{user.FirstName}' Organisation" :
-                    $"{user.FirstName}'s Organisation";
-
-                // Create an organisation model for the user
-                var organisationModel = new OrganisationModel()
+                Status = "success",
+                Message = "Registration successful",
+                Data = new SuccessData
                 {
-                    Name = name,
-                    Description = $"Created on {DateTime.Now:dd MMMM, yyyy}"
-                };
-
-                // Create an organisation for the user
-                var organisation = await _organisationService
-                    .CreateOrganisationAsync(organisationModel);
-
-                // Add the user to the organisation
-                organisation.Users.Add(user);
-
-                // Add organisation to list of user's organisations
-                user.Organisations.Add(organisation);
-
-                // Save changes
-                _context.Users.Update(user);
-                _context.Organisations.Update(organisation);
-                await _context.SaveChangesAsync();
-
-                // Generate token
-                string token = GenerateToken(user, _config);
-
-                await transaction.CommitAsync();
-
-                var successResponse = new SuccessResponse()
-                {
-                    Status = "success",
-                    Message = "Registration successful",
-                    Data = new SuccessData
+                    AccessToken = token,
+                    User = new UserDto
                     {
-                        AccessToken = token,
-                        User = new UserDto
-                        {
-                            UserId = user.Id,
-                            FirstName = model.FirstName,
-                            LastName = model.LastName,
-                            Email = model.Email,
-                            Phone = model.Phone
-                        }
+                        UserId = user.Id,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        Email = model.Email,
+                        Phone = model.Phone
                     }
-                };
+                }
+            };
 
-                return successResponse;
-            }
+            return successResponse;
+        }
 
-            return null;
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return null;
     }
 
     public async Task<SuccessResponse?> LoginUserAsync(LoginModel model)

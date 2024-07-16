@@ -7,7 +7,12 @@ using System.Runtime.InteropServices;
 
 namespace HNG_Organisation.Services;
 
-public class OrganisationService
+public interface IOrganisationService
+{
+    Task<Organisation> CreateOrganisationAsync(OrganisationModel model);
+}
+
+public class OrganisationService : IOrganisationService
 {
     private readonly ApplicationDbContext _context;
 

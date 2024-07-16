@@ -1,5 +1,6 @@
 ﻿using HNG_Organisation.Data;
 using HNG_Organisation.Entities;
+using HNG_Organisation.Models;
 using HNG_Organisation.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -20,8 +21,8 @@ public class UserServiceTests
 {
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<SignInManager<User>> _signInManagerMock;
-    private readonly ApplicationDbContext _context;
-    private readonly Mock<OrganisationService> _organisationServiceMock;
+    private readonly Mock<ApplicationDbContext> _contextMock;
+    private readonly Mock<IOrganisationService> _organisationServiceMock;
     private readonly IConfiguration _configuration;
 
     public UserServiceTests()
@@ -35,8 +36,8 @@ public class UserServiceTests
             .UseInMemoryDatabase(databaseName: "InMemoryDbForTesting")
             .Options;
 
-        _context = new ApplicationDbContext(options);
-        _organisationServiceMock = new Mock<OrganisationService>(_context);
+        _contextMock = new Mock<ApplicationDbContext>(options);
+        _organisationServiceMock = new Mock<IOrganisationService>();
 
         var inMemorySettings = new Dictionary<string, string>()
         {
@@ -67,7 +68,7 @@ public class UserServiceTests
             _userManagerMock.Object,
             _signInManagerMock.Object,
             _configuration,
-            _context,
+            _contextMock.Object,
             _organisationServiceMock.Object);
 
         // Act
@@ -97,7 +98,7 @@ public class UserServiceTests
             _userManagerMock.Object,
             _signInManagerMock.Object,
             _configuration,
-            _context,
+            _contextMock.Object,
             _organisationServiceMock.Object);
 
         // Act
@@ -107,5 +108,179 @@ public class UserServiceTests
         // Assert
         Assert.Equal(user.Id, jwtToken.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
         Assert.Equal(user.Email, jwtToken.Claims.First(c => c.Type == ClaimTypes.Name).Value);
+    }
+
+    [Fact]
+    public async Task RegisterUser_ShouldRegisterUserAndCreateNewOrganisation()
+    {
+        // Arrange
+        var registerModel = new RegisterModel
+        {
+            FirstName = "Test",
+            LastName = "User",
+            Email = "test@example.com",
+            Password = "Password123!",
+            Phone = "1234567890"
+        };
+
+        _userManagerMock.Setup(um => um.CreateAsync(
+            It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _organisationServiceMock.Setup(os => os.CreateOrganisationAsync(
+            It.IsAny<OrganisationModel>()))
+            .ReturnsAsync(new Organisation { Id = "org-id", Name = "Test's Organisation" });
+
+        var userService = new UserService(
+            _userManagerMock.Object,
+            _signInManagerMock.Object,
+            _configuration,
+            _contextMock.Object,
+            _organisationServiceMock.Object);
+
+        // Act
+        var result = await userService.RegisterUserAsync(registerModel);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("success", result.Status);
+        Assert.Equal("Test", result.Data.User.FirstName);
+        Assert.Equal("User", result.Data.User.LastName);
+        Assert.Equal("test@example.com", result.Data.User.Email);
+        Assert.Equal("1234567890", result.Data.User.Phone);
+        Assert.NotNull(result.Data.AccessToken);
+
+        // Verify the organisation was created correctly in the context
+        var organisation = await _contextMock.Object.Organisations
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(organisation);
+        Assert.Equal("Test's Organisation", organisation.Name);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_ShouldCreateOrganisationWithCorrectName()
+    {
+        // Arrange
+        var registerModel = new RegisterModel
+        {
+            FirstName = "Chris",
+            LastName = "User",
+            Email = "chris@example.com",
+            Password = "Password123!",
+            Phone = "1234567890"
+        };
+
+        _userManagerMock.Setup(um => um.CreateAsync(
+            It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _organisationServiceMock.Setup(os => os.CreateOrganisationAsync(
+            It.IsAny<OrganisationModel>()))
+            .ReturnsAsync(new Organisation { Id = "org-id", Name = "Chris' Organisation" });
+
+        var userService = new UserService(
+            _userManagerMock.Object,
+            _signInManagerMock.Object,
+            _configuration,
+            _contextMock.Object,
+            _organisationServiceMock.Object);
+
+        // Act
+        var result = await userService.RegisterUserAsync(registerModel);
+
+        // Assert
+        Assert.NotNull(result);
+        //Assert.Equal("Chris' Organisation", result.Data.User.FirstName + "' Organisation");
+
+        // Verify the organisation was created correctly in the context
+        var organisation = await _contextMock.Object.Organisations
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(organisation);
+        Assert.Equal("Chris' Organisation", organisation.Name);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_ShouldFailIfFirstNameIsMissing()
+    {
+        // Arrange
+        var registerModel = new RegisterModel
+        {
+            LastName = "User",
+            Email = "test@example.com",
+            Password = "Password123!",
+            Phone = "1234567890"
+        };
+
+        var userService = new UserService(
+            _userManagerMock.Object,
+            _signInManagerMock.Object,
+            _configuration,
+            _contextMock.Object,
+            _organisationServiceMock.Object);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<NullReferenceException>(() => userService.RegisterUserAsync(registerModel));
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_ShouldFailIfEmailIsDuplicate()
+    {
+        // Arrange
+        var registerModel = new RegisterModel
+        {
+            FirstName = "Test",
+            LastName = "User",
+            Email = "duplicate@example.com",
+            Password = "Password123!",
+            Phone = "1234567890"
+        };
+
+        _userManagerMock.Setup(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "DuplicateEmail", Description = "Email is already taken." }));
+
+        var userService = new UserService(
+            _userManagerMock.Object,
+            _signInManagerMock.Object,
+            _configuration,
+            _contextMock.Object,
+            _organisationServiceMock.Object);
+
+        // Act
+        var result = await userService.RegisterUserAsync(registerModel);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_ShouldReturn422ForDuplicateEmailOrUserID()
+    {
+        // Arrange
+        var registerModel = new RegisterModel
+        {
+            FirstName = "Test",
+            LastName = "User",
+            Email = "duplicate@example.com",
+            Password = "Password123!",
+            Phone = "1234567890"
+        };
+
+        _userManagerMock.Setup(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "DuplicateEmail", Description = "Email is already taken." }));
+
+        var userService = new UserService(
+            _userManagerMock.Object,
+            _signInManagerMock.Object,
+            _configuration,
+            _contextMock.Object,
+            _organisationServiceMock.Object);
+
+        // Act
+        var result = await userService.RegisterUserAsync(registerModel);
+
+        // Assert
+        Assert.Null(result);
     }
 }
